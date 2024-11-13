@@ -57,7 +57,7 @@ class ImageAnalyzer:
         try:
             # Create message with image and prompt
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",  # Note: Changed from gpt-4o-mini to gpt-4-vision-preview
+                model="gpt-4o-mini", 
                 messages=[
                     {
                         "role": "user",
