@@ -72,10 +72,7 @@ if __name__ == "__main__":
 
     image_path = "../data/images/burger.jpg"
     prompt = (
-        "Analyze the provided food image and generate a concise query string that describes the food in a way "
-        "that is suitable for obtaining nutritional data from the USDA API. The query should focus on accurately "
-        "identifying the food items visible in the image, such as 'cheeseburger with lettuce and tomato', and "
-        "should avoid unnecessary details or unrelated information."
+        "Describe the food in the image, make it concise and simple. Try to indicate all the food component in the image."
     )
 
     try:
