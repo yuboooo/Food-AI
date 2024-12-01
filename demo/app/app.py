@@ -1,4 +1,4 @@
-# from preprocess import encode_image
+from preprocess import encode_image
 from agents import agent1_food_image_caption, agent2_nutrition_augmentation
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
