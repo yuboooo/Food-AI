@@ -1,3 +1,6 @@
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 from preprocess import encode_image
 from agents import agent1_food_image_caption, agent2_nutrition_augmentation
 from langchain_chroma import Chroma
