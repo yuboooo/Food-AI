@@ -1,8 +1,12 @@
+from langchain_chroma import Chroma
 __import__('pysqlite3')
 import sys
+import pysqlite3
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 from preprocess import encode_image
 from agents import agent1_food_image_caption, agent2_nutrition_augmentation
+import chromadb
+import chromadb.config
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 import streamlit as st
@@ -10,7 +14,7 @@ import boto3
 from PIL import Image
 import os
 
-
+OPENAI_API_KEY = st.secrets["general"]["OPENAI_API_KEY"]
 # def get_db_json():
 #     return Chroma(
 #         collection_name="food_items_collection",
@@ -20,7 +24,12 @@ import os
 
 def download_s3_bucket(bucket_name, local_dir):
     # Create an S3 client
-    s3 = boto3.client('s3')
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=st.secrets["aws"]["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=st.secrets["aws"]["AWS_SECRET_ACCESS_KEY"],
+        region_name=st.secrets["aws"]["AWS_DEFAULT_REGION"]
+    )
 
     paginator = s3.get_paginator('list_objects_v2')
     operation_parameters = {'Bucket': bucket_name}
@@ -52,7 +61,7 @@ def get_db_json():
     # Load the Chroma database
     return Chroma(
         collection_name="food_items_collection",
-        embedding_function=OpenAIEmbeddings(model="text-embedding-3-large"),
+        embedding_function=OpenAIEmbeddings(model="text-embedding-3-large", api_key=st.secrets["general"]["OPENAI_API_KEY"]),
         persist_directory=db_path
     )
 
