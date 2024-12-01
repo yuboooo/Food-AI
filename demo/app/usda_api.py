@@ -1,6 +1,5 @@
 import requests
 import os
-import json
 
 def get_food_nutrition_info(query, data_type=None):
     base_url = "https://api.nal.usda.gov/fdc/v1/foods/search"
