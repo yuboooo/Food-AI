@@ -8,8 +8,10 @@ import os
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from uuid import uuid4
+import streamlit as st
 
 load_dotenv()
+openai_api_key = st.secrets["general"]["OPENAI_API_KEY"]
 
 def encode_image(file) -> str:
     """
@@ -54,7 +56,7 @@ def vector_db(filtered_db_path: str, vector_db_path: str):
     Take the filtered database and vectorize the food descriptions.
     Each line in the file will be one vector.
     """
-    openai_embeddings = OpenAIEmbeddings(model="text-embedding-ada-002", api_key=os.getenv("OPENAI_API_KEY"))
+    openai_embeddings = OpenAIEmbeddings(model="text-embedding-ada-002", api_key=openai_api_key)
     if not Path(vector_db_path).is_dir():
         data = pd.read_csv(filtered_db_path)
         text_data = data['Description'].tolist()

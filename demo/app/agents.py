@@ -1,18 +1,17 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
-
+import streamlit as st
 
 load_dotenv()
+api_key = st.secrets["general"]["OPENAI_API_KEY"]
 
 def agent1_food_image_caption(encoded_image: str) -> str:
     """
     Take the food image (base64 encoded) and prompt (which ask to describe the food component in the image) and return the caption.
     """
     # Step 1: Initialize the OpenAI client
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    if not os.getenv("OPENAI_API_KEY"):
-        raise ValueError("API key must be provided.")
+    client = OpenAI(api_key=api_key)
     
     # Step 2: Prompt
     prompt = "Identify the main food item in the image and list its major components or ingredients. Return the result as a plain, comma-separated string (e.g., Salmon (raw), White rice, Pineapple, Cucumber, Seaweed (wakame), Sesame seeds). Do not include brackets, quotes, or any other formatting."
@@ -45,9 +44,7 @@ def agent2_nutrition_augmentation(encoded_image: str, nutrition_info: dict) -> s
     Take the nutrition information and augment it with additional details.
     """
     # Step 1: Initialize the OpenAI client
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    if not os.getenv("OPENAI_API_KEY"):
-        raise ValueError("API key must be provided.")
+    client = OpenAI(api_key=api_key)
     
     # Step 2: Prompt
 
