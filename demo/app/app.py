@@ -1,4 +1,3 @@
-from langchain_chroma import Chroma
 __import__('pysqlite3')
 import sys
 import pysqlite3
