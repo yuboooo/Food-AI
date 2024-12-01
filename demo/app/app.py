@@ -12,6 +12,7 @@ import streamlit as st
 import boto3
 from PIL import Image
 import os
+import pandas as pd
 
 OPENAI_API_KEY = st.secrets["general"]["OPENAI_API_KEY"]
 # def get_db_json():
@@ -67,41 +68,94 @@ def get_db_json():
 if __name__ == "__main__":
 
     # Streamlit app
-    st.title("Food Nutrition Analyzer")
+    st.title("🍎 Food AI")
 
-    st.header("Upload a Food Image")
+    st.markdown("Analyze your food and get detailed nutritional insights! 🎉")
+    st.header("📸 Upload a Food Image")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
 
-    if uploaded_file is not None:
-        # Display the uploaded image
+    if uploaded_file is None:
+        st.info("Please upload a JPG, PNG, or JPEG image of your food to get started!")
+    else:
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded Food Image", use_container_width=True)
 
         # Encode image and extract ingredients
-        st.write("Processing image to extract food ingredients...")
-        encoded_image = encode_image(uploaded_file)
-        ingredients = agent1_food_image_caption(encoded_image)
-        st.subheader("Extracted Food Ingredients")
+        with st.spinner("Processing image to extract food ingredients..."):
+            encoded_image = encode_image(uploaded_file)
+            ingredients = agent1_food_image_caption(encoded_image)
+
+        st.subheader("🍴 Extracted Food Ingredients")
         st.write(ingredients)
 
-        # Get the database
-        db = get_db_json()
+        with st.spinner("Fetching nutrition information for ingredients..."):
+            # Get the database
+            db = get_db_json()
 
-        # Retrieve nutrition info for each ingredient
-        st.write("Fetching nutrition information for ingredients...")
-        nutrition_info = {}
-        for ingredient in ingredients:
-            similar_doc = db.similarity_search(ingredient, k=1)
-            food_description = similar_doc[0].page_content if similar_doc else None
-            metadata = similar_doc[0].metadata
-            nutrition_info[food_description] = metadata
 
-        st.subheader("Nutrition Facts for Each Ingredient (per 100g)")
-        for description, metadata in nutrition_info.items():
-            st.write(f"**{description}**: {metadata}")
+            # Retrieve nutrition info for each ingredient
+            nutrition_info = {}
+            for ingredient in ingredients:
+                similar_doc = db.similarity_search(ingredient, k=1)
+                food_description = similar_doc[0].page_content if similar_doc else None
+                metadata = similar_doc[0].metadata
+                nutrition_info[food_description] = metadata  # Use ingredient as the key
 
-        # Augmented nutrition data
-        st.write("Generating augmented nutrition information...")
-        nutrition_augmentation = agent2_nutrition_augmentation(encoded_image, nutrition_info)
-        st.subheader("Augmented Nutrition Information")
-        st.write(nutrition_augmentation)
+        # Prepare a cleaner table
+        st.subheader("🍽️ Nutrition Facts for Each Ingredient (per 100g)")
+
+        # Convert nutrition info to a DataFrame for better display
+        nutrition_df = pd.DataFrame.from_dict(nutrition_info, orient='index').reset_index()
+        nutrition_df.columns = ["Ingredient", "Carbohydrate (g)", "Energy (kcal)", "Protein (g)", "Fat (g)"]
+
+        # Customize the DataFrame for a better display
+        nutrition_df["Carbohydrate (g)"] = nutrition_df["Carbohydrate (g)"].apply(lambda x: x.split()[0])
+        nutrition_df["Protein (g)"] = nutrition_df["Protein (g)"].apply(lambda x: x.split()[0])
+        nutrition_df["Fat (g)"] = nutrition_df["Fat (g)"].apply(lambda x: x.split()[0])
+        nutrition_df["Energy (kcal)"] = nutrition_df["Energy (kcal)"].apply(lambda x: x.split()[0])
+
+        # Display as a pretty table in Streamlit
+        st.table(nutrition_df)
+
+
+        # # Augmented nutrition data
+        # st.write("Generating augmented nutrition information...")
+        # nutrition_augmentation = agent2_nutrition_augmentation(encoded_image, nutrition_info)
+        # st.subheader("Augmented Nutrition Information")
+        # st.write(nutrition_augmentation)
+
+
+        # Augmented Nutrition Data
+        st.subheader("🌟 Augmented Nutrition Information")
+        st.markdown("""
+        Here, we enhance the basic nutrition facts with additional insights, 
+        combining data and analysis to provide you with a richer understanding of your food choices.
+        """)
+
+        # Generate augmented nutrition information
+        with st.spinner("Generating augmented nutrition information..."):
+            nutrition_augmentation = agent2_nutrition_augmentation(encoded_image, nutrition_info)
+
+        # Display the augmented information with better formatting
+        st.markdown(f"""{nutrition_augmentation}""")
+
+
+
+
+
+        # Add explanation and citation
+        st.subheader("📚 Source Information")
+        st.markdown("""
+        The nutritional facts displayed above are sourced from the **USDA SRLegacy Database**. 
+        Our system identifies the most similar food descriptions in the database based on the ingredients you provided. 
+        While we strive to make the matches as accurate as possible, they might not always perfectly reflect the exact nutrition of your specific ingredient.
+        We are working to improve our data and algorithms in future versions.
+
+        Below are the matched descriptions from the USDA SRLegacy Database for your reference:
+        """)
+
+        # Display matched descriptions and source citation
+
+        with st.expander("View USDA Food Central Data Sources"):
+            for ingredient, description in nutrition_info.items():
+                st.write(f"- **{ingredient}**:  {description}.")
