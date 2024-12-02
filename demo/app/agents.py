@@ -14,7 +14,9 @@ def agent1_food_image_caption(encoded_image: str) -> str:
     client = OpenAI(api_key=api_key)
     
     # Step 2: Prompt
-    prompt = "Identify the main food item in the image and list its major components or ingredients. Return the result as a plain, comma-separated string (e.g., Salmon (raw), White rice, Pineapple, Cucumber, Seaweed (wakame), Sesame seeds). Do not include brackets, quotes, or any other formatting."
+    # prompt = "Identify the main food item in the image and list its major components or ingredients. Return the result as a plain, comma-separated string (e.g., Salmon (raw), White rice, Pineapple, Cucumber, Seaweed (wakame), Sesame seeds). Do not include brackets, quotes, or any other formatting. Your result should only include ingredients you identified, not the name of the dish or any other information."
+
+    prompt = "List the major ingredients you can visually identify in the food item shown, separated by commas. Each ingredient should be described in simple terms (e.g., raw salmon, white rice). Do not include the dish name, preparation methods, quantities, or any additional commentary. Avoid using brackets, quotes, or special formatting. Example output format: raw salmon, white rice, cucumber, sesame seeds"
 
     # Step 3: Return the caption
     try:
@@ -39,7 +41,7 @@ def agent1_food_image_caption(encoded_image: str) -> str:
         raise Exception(f"Error during API call: {str(e)}")
 
 
-def agent2_nutrition_augmentation(encoded_image: str, nutrition_info: dict) -> str:
+def agent2_nutrition_augmentation(encoded_image: str, nutrition_info: dict, ingredients: list) -> str:
     """
     Take the nutrition information and augment it with additional details.
     """
@@ -48,61 +50,107 @@ def agent2_nutrition_augmentation(encoded_image: str, nutrition_info: dict) -> s
     # Step 2: Prompt
 
 
-    prompt = "The above nutrition facts, it describe the ingredient's nutrition per 100g. Can you then estimate the total nutrition info for the food in the provided image, based on the nutrition facts i provided to you, and also your own knowledge from your database, if you identified this food from your database, you can also directly use the information their. Simply return the nutrition info in a nice readable str format, make it concise, and easy to read. If you need to use scratch pad, you can use the scratch pad below to do your calculation. But keep the output clean(dont explicitly show our provided nutrition facts in response), especially provide a Summary Section in the end"
+    # prompt = "The above nutrition facts, it describe the ingredient's nutrition per 100g. Can you then estimate the total nutrition info for the food in the provided image, based on the nutrition facts i provided to you, and also your own knowledge from your database, if you identified this food from your database, you can also directly use the information their. Simply return the nutrition info in a nice readable str format, make it concise, and easy to read. If you need to use scratch pad, you can use the scratch pad below to do your calculation. But keep the output clean(dont explicitly show our provided nutrition facts in response), especially provide a Summary Section in the end"
 
-    prompt = f"{nutrition_info} \n\n{prompt}"
+    # prompt = f"{nutrition_info} \n\n{prompt}"
     
 
 
-    # prompt = f"""You are a nutrition expert analyzing the dish in the provided image.
+    # prompt = f"""
+    #             You are a nutrition researcher who can analyze the nutrition information for food in the provided image.
+    #             Please first identify the food in the image.
+    #             And search through your nutrition and food database to help yourself understand the nutrition details of the food.
+    #             We also provided you with the nutrition facts for each of the {ingredients} in the food. For each of the ingredients,
+    #             we find the most similar nutrition facts on USDA Food Database, here is the detailed nutrition information for your reference: {nutrition_info}.
+    #             They are based on the nutrition facts per 100g.
+    #             Thus you need to based on the food image, estimate the weight of each ingredient in the food.
+    #             Then, I want you to based on the nutrition knowledge you searched in your own database, the weight of each ingredient you esitimated, and the provided nutrition facts, to estimate the total nutrition info for the food in the provided image. Note, if you think the provided nutrition facts are irelevant, for example it mentioned the ingredients that are not in the food, you can ignore them, and use your own knowledge to estimate the nutrition info.
 
-    #         AVAILABLE NUTRITION DATA (per 100g):
-    #         {nutrition_info}
+    #             Note: Everything related to calculation, use plain text format, be super concise, NO SPECIAL FORMAT, USE PLAIN TEXT ONLY.
 
-    #         ANALYSIS INSTRUCTIONS:
-    #         1. Identify all visible ingredients in the dish
-    #         2. Use provided nutrition facts and your knowledge to calculate total nutrition
-    #         3. Show ingredient-by-ingredient breakdown
-    #         4. Calculate and show the total values
-    #         5. Include a brief summary and any relevant assumptions
+    #             Your response will directly display to end users, so be friendly and professional, you want the user understand your analysis easily. 
+    #             Provide your response in markdown format, the title size will be similar to h3. Here are some sections you can include in your response:
+    #             Overview: 
+    #                 - The estimated weight for each ingredient in the food.
+    #             Nutrition Estimation:
+    #                 - For each ingredient, provide a simple calculation estimation walkthrough, display in plain text format, be really concise, including energy, protein, fat, and carbohydrate. (Dont need to be using exact number, just give a rough estimation, and only display unit in the end, it would be great if you can provide a range of the estimation, +/- 10% is fine, and no need to be accurate on the digit)
+    #             Summary:
+    #                 - List the total nutrition info for the food in the image, including energy, protein, fat, and carbohydrate.
 
-    #         PROVIDE YOUR RESPONSE IN THIS FORMAT:
+    #         """
+    
+    prompt = f"""
+            Role and Context
+            You are a nutrition researcher specialized in analyzing food components and nutritional content. Your task is to analyze food items from images and provide detailed nutritional assessments.
+            Input Analysis
 
-    #         Based on the ingredients visible in the image and their corresponding nutrition facts, here's an estimated nutritional breakdown:
+            Examine the provided food image
+            Here is the ingredients we identified in the image: {ingredients}
+            Reference the provided USDA Food Database nutrition facts per 100g for each ingredient: {nutrition_info}
 
-    #         Ingredient-by-Ingredient Breakdown (per 100g):
-    #         [Ingredient 1 Name]:
-    #         • Energy: X kcal
-    #         • Protein: X g
-    #         • Total lipid (fat): X g
+            Analysis Requirements
 
-    #         [Ingredient 2 Name]:
-    #         • Energy: X kcal
-    #         • Protein: X g
-    #         • Total lipid (fat): X g
-    #         [Continue for all ingredients...]
+            Weight Estimation
 
-    #         Total Nutrition Calculation:
-    #         Energy: [Show addition of all ingredients] = X kcal
-    #         Protein: [Show addition of all ingredients] = X g
-    #         Total lipid (fat): [Show addition of all ingredients] = X g
+            Estimate the approximate weight of each visible ingredient
+            Consider typical serving sizes and proportions
+            Account for cooking methods that may affect weight
 
-    #         Final Summary:
-    #         • Total Energy: X kcal
-    #         • Total Protein: X g
-    #         • Total Fat: X g
 
-    #         Assumptions and Notes:
-    #         - Include key assumptions about portions
-    #         - Note if standard database values were used
-    #         - Mention any significant adjustments made
+            Nutritional Calculation
 
-    #         REQUIREMENTS:
-    #         - Show calculations clearly but keep them organized
-    #         - Round numbers to 2 decimal places
-    #         - Use consistent units throughout
-    #         - If using database values, clearly indicate this
-    #         - Consider both visible evidence and typical serving sizes"""
+            Use provided USDA data when relevant
+            Apply your nutrition knowledge for any ingredients without provided data
+            Consider cooking methods that might affect nutritional content
+            Provide calculations based on estimated weights
+
+
+
+            Output Format
+            Please structure your response in markdown format with the following sections:
+            Overview
+
+            Identify the food item
+            List each ingredient with its estimated weight
+            Note any assumptions made in weight estimation in italics
+
+            Nutrition Estimation
+
+            For each ingredient:
+
+            Show only final estimated values (no calculation steps)
+            Include: energy, protein, fat, and carbohydrates
+            Present as a range (±10%)
+            List units at the end
+            Example: "Bread (50-60g): Energy 140-160 kcal, Protein 4-5g, Fat 2-3g, Carbs 28-32g"
+
+            Summary
+
+            Present total values with ±10% range for:
+
+            Energy (kcal)
+            Protein (g)
+            Fat (g)
+            Carbohydrates (g)
+
+            In a nice Table format
+
+            Before return the final result, refer back to your nutrition knowledge database for more accurate estimations if the provided nutrition facts seem irrelevant or inaccurate for the visible food item, revise the nutrition information accordingly.
+
+
+
+            Style Guidelines
+
+            Use professional but accessible language
+            Keep calculations concise and easy to follow
+            Avoid special formatting in calculation sections
+            Present ranges rather than precise numbers
+            Write in a friendly, informative tone
+            The title of each section should be similar to h3 size
+
+            Note: If provided nutrition facts seem irrelevant or inaccurate for the visible food item, rely on your nutrition knowledge database for more accurate estimations.
+
+            """
 
     # Step 3: Return the augmented nutrition information
     try:
