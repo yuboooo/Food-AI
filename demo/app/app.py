@@ -1,7 +1,8 @@
-__import__('pysqlite3')
-import sys
-import pysqlite3
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3')
+# import sys
+# import pysqlite3
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 from preprocess import encode_image
 from agents import agent1_food_image_caption, agent2_nutrition_augmentation
 import chromadb
@@ -95,17 +96,19 @@ if __name__ == "__main__":
 
             # Retrieve nutrition info for each ingredient
             nutrition_info = {}
+            display_info = {}
             for ingredient in ingredients:
                 similar_doc = db.similarity_search(ingredient, k=1)
                 food_description = similar_doc[0].page_content if similar_doc else None
                 metadata = similar_doc[0].metadata
+                display_info[ingredient] = metadata
                 nutrition_info[food_description] = metadata  # Use ingredient as the key
 
         # Prepare a cleaner table
         st.subheader("🍽️ Nutrition Facts for Each Ingredient (per 100g)")
 
         # Convert nutrition info to a DataFrame for better display
-        nutrition_df = pd.DataFrame.from_dict(nutrition_info, orient='index').reset_index()
+        nutrition_df = pd.DataFrame.from_dict(display_info, orient='index').reset_index()
         nutrition_df.columns = ["Ingredient", "Carbohydrate (g)", "Energy (kcal)", "Protein (g)", "Fat (g)"]
 
         # Customize the DataFrame for a better display
@@ -134,11 +137,10 @@ if __name__ == "__main__":
 
         # Generate augmented nutrition information
         with st.spinner("Generating augmented nutrition information..."):
-            nutrition_augmentation = agent2_nutrition_augmentation(encoded_image, nutrition_info)
+            nutrition_augmentation = agent2_nutrition_augmentation(encoded_image, nutrition_info, ingredients)
 
         # Display the augmented information with better formatting
         st.markdown(f"""{nutrition_augmentation}""")
-
 
 
 
@@ -147,7 +149,7 @@ if __name__ == "__main__":
         st.subheader("📚 Source Information")
         st.markdown("""
         The nutritional facts displayed above are sourced from the **USDA SRLegacy Database**. 
-        Our system identifies the most similar food descriptions in the database based on the ingredients you provided. 
+        Our system identifies the most similar food descriptions in the database based on the ingredients we identified. 
         While we strive to make the matches as accurate as possible, they might not always perfectly reflect the exact nutrition of your specific ingredient.
         We are working to improve our data and algorithms in future versions.
 
