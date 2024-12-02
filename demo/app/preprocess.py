@@ -13,6 +13,12 @@ from dotenv import load_dotenv
 from langchain_core.documents import Document
 from uuid import uuid4
 import streamlit as st
+import boto3
+import streamlit as st
+from PIL import Image
+import io
+from datetime import datetime
+import uuid
 
 load_dotenv()
 openai_api_key = st.secrets["general"]["OPENAI_API_KEY"]
@@ -38,6 +44,31 @@ def encode_image_path(image_path: str) -> str:
             return base64.b64encode(image_file.read()).decode('utf-8')
     except Exception as e:
         raise ValueError(f"Error encoding image: {str(e)}")
+    
+
+def upload_image(file):
+
+    bucket_name = "food-ai-images"
+
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=st.secrets["aws"]["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=st.secrets["aws"]["AWS_SECRET_ACCESS_KEY"],
+        region_name=st.secrets["aws"]["AWS_DEFAULT_REGION"]
+    )
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    unique_id = str(uuid.uuid4())[:8]
+    original_filename = file.name
+    extension = original_filename.split('.')[-1]
+    filename = f"image_{timestamp}_{unique_id}.{extension}"
+
+    s3.put_object(
+        Bucket=bucket_name,
+        Key=filename,
+        Body=file.getvalue(),
+        ContentType=file.type if file.type else 'application/octet-stream'
+    )
     
 def filter_food_description_from_USDA_DB(database_url: str):
     """

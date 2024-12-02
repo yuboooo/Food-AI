@@ -10,15 +10,11 @@ def agent1_food_image_caption(encoded_image: str) -> str:
     """
     Take the food image (base64 encoded) and prompt (which ask to describe the food component in the image) and return the caption.
     """
-    # Step 1: Initialize the OpenAI client
     client = OpenAI(api_key=api_key)
-    
-    # Step 2: Prompt
-    # prompt = "Identify the main food item in the image and list its major components or ingredients. Return the result as a plain, comma-separated string (e.g., Salmon (raw), White rice, Pineapple, Cucumber, Seaweed (wakame), Sesame seeds). Do not include brackets, quotes, or any other formatting. Your result should only include ingredients you identified, not the name of the dish or any other information."
 
-    prompt = "List the major ingredients you can visually identify in the food item shown, separated by commas. Each ingredient should be described in simple terms (e.g., raw salmon, white rice). Do not include the dish name, preparation methods, quantities, or any additional commentary. Avoid using brackets, quotes, or special formatting. Example output format: raw salmon, white rice, cucumber, sesame seeds"
 
-    # Step 3: Return the caption
+    prompt = "List the major ingredients you can visually identify in the food item shown, separated by commas. Each ingredient should be described in simple terms (e.g., raw salmon, white rice). Do not include the dish name, preparation methods, quantities, or any additional commentary. Avoid using brackets, quotes, or special formatting. Example output format: raw salmon, white rice, cucumber, sesame seeds. Note: If the image is unclear or the food is unidentifiable, your response should be a simple string 'False'."
+
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini", 

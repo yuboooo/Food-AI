@@ -14,6 +14,7 @@ import boto3
 from PIL import Image
 import os
 import pandas as pd
+from preprocess import upload_image
 
 OPENAI_API_KEY = st.secrets["general"]["OPENAI_API_KEY"]
 # def get_db_json():
@@ -66,6 +67,7 @@ def get_db_json():
         persist_directory=db_path
     )
 
+
 if __name__ == "__main__":
 
     # Streamlit app
@@ -79,12 +81,17 @@ if __name__ == "__main__":
         st.info("Please upload a JPG, PNG, or JPEG image of your food to get started!")
     else:
         image = Image.open(uploaded_file)
+        upload_image(uploaded_file)
         st.image(image, caption="Uploaded Food Image", use_container_width=True)
 
         # Encode image and extract ingredients
         with st.spinner("Processing image to extract food ingredients..."):
             encoded_image = encode_image(uploaded_file)
             ingredients = agent1_food_image_caption(encoded_image)
+
+        if ingredients[0] == 'False':
+            st.error("Sorry, we couldn't identify the food in the image. Please try again with a clearer image.")
+            st.stop()
 
         st.subheader("🍴 Extracted Food Ingredients")
         st.write(ingredients)
